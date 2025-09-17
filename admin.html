@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Booking List</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    th { background: #f4f4f4; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .btn { padding: 6px 12px; border: none; cursor: pointer; border-radius: 4px; }
+    .refresh-btn { background: #007BFF; color: white; margin-bottom: 10px; }
+    .refresh-btn:hover { background: #0056b3; }
+    .delete-btn { background: #dc3545; color: white; }
+    .delete-btn:hover { background: #a71d2a; }
+  </style>
+</head>
+<body>
+  <h1>📋 Booking Management (Admin)</h1>
+  <button class="btn refresh-btn" onclick="fetchBookings()">🔄 Refresh</button>
+
+  <table id="booking-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Service</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Bookings will load here -->
+    </tbody>
+  </table>
+
+  <script>
+    const API_URL = "http://localhost:5000/api/bookings";
+
+    // Fetch all bookings
+    async function fetchBookings() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("Failed to fetch bookings");
+        const bookings = await res.json();
+
+        const tableBody = document.querySelector("#booking-table tbody");
+        tableBody.innerHTML = "";
+
+        if (bookings.length === 0) {
+          tableBody.innerHTML = "<tr><td colspan='6'>No bookings found</td></tr>";
+          return;
+        }
+
+        bookings.forEach(b => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${b.name}</td>
+            <td>${b.email}</td>
+            <td>${b.service}</td>
+            <td>${b.date}</td>
+            <td>${b.time}</td>
+            <td>
+              <button class="btn delete-btn" onclick="deleteBooking('${b._id}')">🗑 Delete</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("❌ Error loading bookings:", err);
+        alert("Error loading bookings!");
+      }
+    }
+
+    // Delete booking by ID
+    async function deleteBooking(id) {
+      if (!confirm("Are you sure you want to delete this booking?")) return;
+
+      try {
+        const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Failed to delete booking");
+
+        const result = await res.json();
+        alert(result.message);
+        fetchBookings(); // Refresh after delete
+      } catch (err) {
+        console.error("❌ Error deleting booking:", err);
+        alert("Error deleting booking!");
+      }
+    }
+
+    // Load on page start
+    window.onload = fetchBookings;
+  </script>
+</body>
+</html>
